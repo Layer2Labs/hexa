@@ -348,6 +348,8 @@ export default function AddContactAddressBook( props ) {
       contactText:strings.adding,
       showDone:true,
       skipClicked: true,
+      senderName: props?.navigation?.state?.params?.senderName,
+      note : props?.navigation?.state?.params?.note
     } )
   }
 
@@ -603,7 +605,7 @@ export default function AddContactAddressBook( props ) {
                           const i = item.name.split( ' ' ).length
                           return (
                             <Text style={{
-                              color: selected ? Colors.blue : null
+                              color: selected ? Colors.blue : Colors.black
                             }}>
                               {index !== i-1 ? `${x} ` :
                                 <Text style={{
