@@ -4,6 +4,10 @@ import * as bip32 from 'bip32'
 import * as bip39 from 'bip39'
 import bs58check from 'bs58check'
 import * as bitcoinJS from 'bitcoinjs-lib'
+import ECPairFactory, { ECPairInterface } from 'ecpair'
+import * as ecc from 'tiny-secp256k1'
+const ECPair = ECPairFactory( ecc )
+
 import config from '../../HexaConfig'
 import _ from 'lodash'
 import { Transaction, ScannedAddressKind, Balances, MultiSigAccount, Account, NetworkType, AccountType, DonationAccount, ActiveAddresses, TransactionType, DerivationPurpose } from '../Interface'
@@ -54,11 +58,11 @@ export default class AccountUtilities {
     else return `m/49'/0'/${accountNumber}'`
   }
 
-  static getKeyPair = ( privateKey: string, network: bitcoinJS.Network ): bitcoinJS.ECPairInterface =>
-    bitcoinJS.ECPair.fromWIF( privateKey, network )
+  static getKeyPair = ( privateKey: string, network: bitcoinJS.Network ): ECPairInterface =>
+    ECPair.fromWIF( privateKey, network )
 
   static deriveAddressFromKeyPair = (
-    keyPair: bip32.BIP32Interface | bitcoinJS.ECPairInterface,
+    keyPair: bip32.BIP32Interface | ECPairInterface,
     network: bitcoinJS.Network,
     purpose: DerivationPurpose = DerivationPurpose.BIP49,
   ): string => {
@@ -127,7 +131,7 @@ export default class AccountUtilities {
     )
   };
 
-  static getP2SH = ( keyPair: bitcoinJS.ECPairInterface, network: bitcoinJS.Network ): bitcoinJS.Payment =>
+  static getP2SH = ( keyPair: bip32.BIP32Interface, network: bitcoinJS.Network ): bitcoinJS.Payment =>
     bitcoinJS.payments.p2sh( {
       redeem: bitcoinJS.payments.p2wpkh( {
         pubkey: keyPair.publicKey,
@@ -998,7 +1002,7 @@ export default class AccountUtilities {
   static getSecondSignature = async (
     walletId: string,
     token: number,
-    partiallySignedTxHex: string,
+    serializedPSBT: string,
     childIndexArray: Array<{
       childIndex: number;
       inputIdentifier: {
@@ -1016,7 +1020,7 @@ export default class AccountUtilities {
         HEXA_ID: config.HEXA_ID,
         walletID: walletId,
         token,
-        txHex: partiallySignedTxHex,
+        serializedPSBT,
         childIndexArray,
       } )
     } catch ( err ) {
