@@ -6,10 +6,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native'
-import Colors from '../../common/Colors'
-import _ from 'underscore'
-import ModalContainer from '../../components/home/ModalContainer'
-import SeedHeaderComponent from '../NewBHR/SeedHeaderComponent'
+  import Colors from '../../common/Colors'
+  import _ from 'underscore'
+  import ModalContainer from '../../components/home/ModalContainer'
+  import SeedHeaderComponent from '../NewBHR/SeedHeaderComponent'
 import SeedPageComponent from '../NewBHR/SeedPageComponent'
 import SeedBacupModalContents from '../NewBHR/SeedBacupModalContents'
 import ConfirmSeedWordsModal from '../NewBHR/ConfirmSeedWordsModal'
@@ -23,11 +23,13 @@ import { setVersion } from '../../store/actions/versionHistory'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Wallet } from '../../bitcoin/utilities/Interface'
 import { heightPercentageToDP as hp } from 'react-native-responsive-screen'
+import ErrorModalContents from '../../components/ErrorModalContents'
 
 const RestoreSeedWordsContent = ( props ) => {
   const [ seedWordModal, setSeedWordModal ] = useState( false )
   const [ confirmSeedWordModal, setConfirmSeedWordModal ] = useState( false )
   const [ showLoader, setShowLoader ] = useState( false )
+  const [showErrorModal, setShowErrorModal] = useState(false)
   const dispatch = useDispatch()
   const wallet: Wallet = useSelector( ( state: RootStateOrAny ) => state.storage.wallet )
 
@@ -40,17 +42,33 @@ const RestoreSeedWordsContent = ( props ) => {
     }
   }, [ wallet ] )
 
+  const renderInvalidSeedModal = () =>{
+    return(
+      <ModalContainer onBackground={() => setShowErrorModal(false)}>
+        <ErrorModalContents 
+        title={"Invalid Mnemonic"}
+        info={"Recheck your mnumonic, and try again"}
+        proceedButtonText={"Try Again"}
+        onPressProceed={() => props.navigation.goBack()}
+        />
+      </ModalContainer>
+    )
+  }
+
   const recoverWalletViaSeed = ( mnemonic: string ) => {
     setShowLoader( true )
+    setShowErrorModal( false )
     const isValidMnemonic = bip39.validateMnemonic( mnemonic )
     if( !isValidMnemonic ){
       setShowLoader( false )
-      Alert.alert( 'Invalid mnemonic, try again!' )
+      setShowErrorModal( true )
       return
     }
     dispatch( recoverWalletUsingMnemonic( mnemonic ) )
     setShowLoader( false )
   }
+
+  
 
   return (
     <View style={{
@@ -88,7 +106,7 @@ const RestoreSeedWordsContent = ( props ) => {
         <RestoreSeedPageComponent
           // infoBoxTitle={'Note'}
           // infoBoxInfo={'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt'}
-          onPressConfirm={recoverWalletViaSeed}
+          onPressConfirm={()=> (recoverWalletViaSeed) ? (recoverWalletViaSeed) : (renderInvalidSeedModal())}
           data={[]}
           confirmButtonText={'Next'}
           proceedButtonText={'Proceed'}
@@ -101,6 +119,12 @@ const RestoreSeedWordsContent = ( props ) => {
           previousButtonText={'Previous'}
           isChangeKeeperAllow={true}
         />
+        <ModalContainer
+        onBackground={() => setShowErrorModal(false)}
+          visible={showErrorModal}
+        >
+          {renderInvalidSeedModal()}
+        </ModalContainer>
       </View>
     </View>
   )
