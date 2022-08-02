@@ -7,6 +7,7 @@ import {
   ImageBackground,
   Image,
   Platform,
+  TextInput,
 } from 'react-native'
 import {
   widthPercentageToDP as wp,
@@ -24,6 +25,7 @@ import ModalContainer from '../../components/home/ModalContainer'
 import ErrorModalContents from '../../components/ErrorModalContents'
 import { setCloudBackupStatus, setCloudErrorMessage, updateCloudData } from '../../store/actions/cloud'
 import CloudStatus from '../../common/data/enums/CloudBackupStatus'
+import dynamicLinks from '@react-native-firebase/dynamic-links';
 
 const currencyCode = [
   'BRL',
@@ -50,6 +52,7 @@ import MaterialCurrencyCodeIcon, {
 } from '../MaterialCurrencyCodeIcon'
 import useCurrencyCode from '../../utils/hooks/state-selectors/UseCurrencyCode'
 import CloudBackupStatus from '../../common/data/enums/CloudBackupStatus'
+import ButtonBlue from '../ButtonBlue'
 
 function setCurrencyCodeToImage( currencyName, currencyColor ) {
   return (
@@ -78,6 +81,7 @@ const HomeHeader = ( {
   exchangeRates,
   navigation,
   currentLevel,
+  handleDeepLinkEvent,
 } ) => {
   const { translations, } = useContext( LocalizationContext )
   const strings = translations[ 'header' ]
@@ -108,6 +112,17 @@ const HomeHeader = ( {
   const [ cloudErrorModal, setCloudErrorModal ] = useState( false )
   const [ errorMsg, setErrorMsg ] = useState( '' )
 
+  const [code, setCode] = useState('');
+
+  const [ inputStyle, setInputStyle ] = useState( styles.inputBox );
+
+  const handleSubmit = async () => {
+    const shortLink = 'https://request.hexawallet.io/' + code;
+    const deeplink = await dynamicLinks().resolveLink(shortLink);
+    setInviteModal(false);
+    handleDeepLinkEvent({ url: deeplink.url });
+  };
+
   useEffect( ()=>{
     if( cloudErrorMessage != '' ){
       const message = Platform.select( {
@@ -126,6 +141,8 @@ const HomeHeader = ( {
 
   const walletNameLength = walletName?.split( '' ).length
   const walletNameNew = walletName.split( '' )[ walletNameLength - 1 ].toLowerCase() === 's' ? `${walletName}’ Wallet` : `${walletName}’s Wallet`
+
+  const [inviteModal, setInviteModal] = useState(false);
 
   const getMessage = () => {
     const { messageOne, messageTwo, isFirstMessageBold, isError, isInit } = getMessageToShow()
@@ -380,6 +397,25 @@ const HomeHeader = ( {
             ) : null}
           </ImageBackground>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setInviteModal(true)}
+          style={{
+            height: wp( '9%' ),
+            width: wp( '10%' ),
+            // justifyContent: 'center',
+            marginLeft: 'auto',
+            marginTop: hp( 0.6 )
+          }}
+        >
+          <ImageBackground
+            source={require( '../../assets/images/icons/qr.png' )}
+            style={{
+              width: wp( '6%' ), height: wp( '6%' ), marginLeft: 'auto', marginRight:3
+            }}
+            resizeMode={'contain'}
+          >
+          </ImageBackground>
+        </TouchableOpacity>
       </View>
       {getMessage()}
 
@@ -407,6 +443,42 @@ const HomeHeader = ( {
           }}
           bottomImage={require( '../../assets/images/icons/cloud_ilustration.png' )}
         />
+      </ModalContainer>
+
+      <ModalContainer onBackground={() => setInviteModal(false)} visible={inviteModal} closeBottomSheet={() => setInviteModal(false)}>
+        <View style={{backgroundColor: Colors.backgroundColor, height: hp(30), justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: wp(5)}}>
+          <Text>Enter the Invite Code</Text>
+          <View style={{
+          ...inputStyle
+          }}>
+          <TextInput
+            style={{
+              height: 50,
+              width: '100%',
+              paddingHorizontal: 15,
+              fontSize: RFValue( 13 ),
+              letterSpacing: 0.26,
+              fontFamily: Fonts.FiraSansRegular,
+            }}
+            placeholder={'Enter Code'}
+            placeholderTextColor={Colors.borderColor}
+            value={code}
+            textContentType='none'
+            autoCorrect={false}
+            autoCapitalize="none"
+            onFocus={() => setInputStyle( styles.inputBoxFocused )}
+            onBlur={() => setInputStyle( styles.inputBox )}
+            onChangeText={( text ) => {
+              setCode( text )
+            }}
+          />
+        </View>
+        <ButtonBlue
+          buttonText="Submit"
+          handleButtonPress={handleSubmit}
+          buttonDisable={code.length === 0}
+        />
+        </View>
       </ModalContainer>
     </View>
   )
@@ -467,5 +539,23 @@ const styles = StyleSheet.create( {
     // marginBottom: 3,
     color: Colors.white,
     marginTop: hp( 0.7 )
+  },
+  inputBox: {
+    width: wp(75),
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+    marginVertical: hp( 2 ),
+  },
+  inputBoxFocused: {
+    width: wp(75),
+    borderRadius: 10,
+    elevation: 10,
+    shadowColor: Colors.borderColor,
+    shadowOpacity: 10,
+    shadowOffset: {
+      width: 10, height: 10
+    },
+    backgroundColor: Colors.white,
+    marginVertical: hp( 2 ),
   },
 } )

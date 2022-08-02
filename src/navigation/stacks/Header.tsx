@@ -1723,6 +1723,7 @@ class Home extends PureComponent<HomePropsTypes, HomeStateTypes> {
             CurrencyCode={currencyCode}
             navigation={navigation}
             currentLevel={currentLevel}
+            handleDeepLinkEvent={this.handleDeepLinkEvent}
           //  onSwitchToggle={this.onSwitchToggle}
           // setCurrencyToggleValue={this.setCurrencyToggleValue}
           // navigation={this.props.navigation}
